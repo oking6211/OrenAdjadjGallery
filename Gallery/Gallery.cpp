@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <ctime>		
 #include "MemoryAccess.h"
 #include "AlbumManager.h"
 
@@ -38,6 +39,13 @@ int main(void)
 
 
 	std::string albumName;
+	
+	time_t timestamp;
+	time(&timestamp);
+	std::cout << ctime(&timestamp);
+	std::cout << "Verison 1.0.1 Created by: Oren Adjadj \n" << std::endl;
+	
+
 	std::cout << "Welcome to Gallery!" << std::endl;
 	std::cout << "===================" << std::endl;
 	std::cout << "Type " << HELP << " to a list of all supported commands" << std::endl;

@@ -6,6 +6,7 @@
 
 
 
+
 void MemoryAccess::printAlbums() 
 {
 	if(m_albums.empty()) {
@@ -184,9 +185,25 @@ void MemoryAccess::deleteUser(const User& user)
 {
 	if (doesUserExists(user.getId())) {
 	
+		//gather the albums to delete. cant do in the same loop as it causes vilition
+		std::vector<std::pair<std::string, int>> albumsToDelete;
+		for (const Album& album : m_albums)
+		{
+			if (album.getOwnerId() == user.getId())
+			{
+				albumsToDelete.emplace_back(album.getName(), album.getOwnerId());
+			}
+		}
+
+		// delete the gathered albums to delete
+		for (const auto& album : albumsToDelete)
+		{
+			deleteAlbum(album.first, album.second);
+		}
 		for (auto iter = m_users.begin(); iter != m_users.end(); ++iter) {
 			if (*iter == user) {
 				iter = m_users.erase(iter);
+				
 				return;
 			}
 		}

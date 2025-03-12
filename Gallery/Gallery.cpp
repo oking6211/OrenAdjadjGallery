@@ -29,6 +29,14 @@ int getCommandNumberFromUser()
 	return std::atoi(input.c_str());
 }
 
+void printWelcome()
+{
+	time_t timestamp;
+	time(&timestamp);
+	std::cout << ctime(&timestamp);
+	std::cout << "Verison 1.0.1 Created by: Oren Adjadj \n" << std::endl;
+}
+
 int main(void)
 {
 	// initialization data access
@@ -40,12 +48,7 @@ int main(void)
 
 	std::string albumName;
 	
-	time_t timestamp;
-	time(&timestamp);
-	std::cout << ctime(&timestamp);
-	std::cout << "Verison 1.0.1 Created by: Oren Adjadj \n" << std::endl;
-	
-
+	printWelcome();
 	std::cout << "Welcome to Gallery!" << std::endl;
 	std::cout << "===================" << std::endl;
 	std::cout << "Type " << HELP << " to a list of all supported commands" << std::endl;

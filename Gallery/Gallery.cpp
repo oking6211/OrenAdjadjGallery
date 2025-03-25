@@ -34,7 +34,7 @@ void printWelcome()
 	time_t timestamp;
 	time(&timestamp);
 	std::cout << ctime(&timestamp);
-	std::cout << "Verison 1.0.1 Created by: Oren Adjadj \n" << std::endl;
+	std::cout << "Verison 1.0.2 Created by: Oren Adjadj \n" << std::endl;
 }
 
 int main(void)

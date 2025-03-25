@@ -6,39 +6,39 @@ class DatabaseAccess : public IDataAccess
 {
 public:
 	// album related
-	virtual const std::list<Album> getAlbums();
-	virtual const std::list<Album> getAlbumsOfUser(const User& user);
-	virtual void createAlbum(const Album& album);
-	virtual void deleteAlbum(const std::string& albumName, int userId);
-	virtual bool doesAlbumExists(const std::string& albumName, int userId);
-	virtual Album openAlbum(const std::string& albumName);
-	virtual void closeAlbum(Album& pAlbum);
-	virtual void printAlbums();
+	const std::list<Album> getAlbums() override;
+	const std::list<Album> getAlbumsOfUser(const User& user) override;
+	void createAlbum(const Album& album) override;
+	void deleteAlbum(const std::string& albumName, int userId) override;
+	bool doesAlbumExists(const std::string& albumName, int userId) override;
+	Album openAlbum(const std::string& albumName) override;
+	void closeAlbum(Album& pAlbum) override;
+	void printAlbums() override;
 
 	// picture related
-	virtual void addPictureToAlbumByName(const std::string& albumName, const Picture& picture);
-	virtual void removePictureFromAlbumByName(const std::string& albumName, const std::string& pictureName);
+	void addPictureToAlbumByName(const std::string& albumName, const Picture& picture) override;
+	void removePictureFromAlbumByName(const std::string& albumName, const std::string& pictureName) override;
 	void tagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId) override;
-	virtual void untagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId);
+	void untagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId) override;
 
 	// user related
-	virtual void printUsers();
-	virtual User getUser(int userId);
-	virtual void createUser(User& user);
-	virtual void deleteUser(const User& user);
-	virtual bool doesUserExists(int userId);
+	void printUsers() override;
+	User getUser(int userId) override;
+	void createUser(User& user) override;
+	void deleteUser(const User& user) override;
+	bool doesUserExists(int userId) override;
 
 
 	// user statistics
-	virtual int countAlbumsOwnedOfUser(const User& user);
-	virtual int countAlbumsTaggedOfUser(const User& user);
-	virtual int countTagsOfUser(const User& user);
-	virtual float averageTagsPerAlbumOfUser(const User& user);
+	int countAlbumsOwnedOfUser(const User& user) override;
+	int countAlbumsTaggedOfUser(const User& user) override;
+	int countTagsOfUser(const User& user) override;
+	float averageTagsPerAlbumOfUser(const User& user) override;
 
 	// queries
-	virtual User getTopTaggedUser();
-	virtual Picture getTopTaggedPicture();
-	virtual std::list<Picture> getTaggedPicturesOfUser(const User& user);
+	User getTopTaggedUser() override;
+	Picture getTopTaggedPicture() override;
+	std::list<Picture> getTaggedPicturesOfUser(const User& user) override;
 
 	bool open() override;
 	void close() override;

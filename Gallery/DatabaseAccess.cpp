@@ -1,11 +1,16 @@
 #include "DatabaseAccess.h"
+#include "Picture.h"
 
 void DatabaseAccess::tagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId)
 {
-	int albumId = getID("ALBUM", albumName);
-
+	int albumId = getID("ALBUMS", albumName);
+	if (albumId == -1)
+	{
+		std::cerr << "Album not found!" << std::endl;
+		return;
+	}
 	// get picId
-	std::string sql = "SELECT ID FROM PICTURE WHERE NAME = '" + pictureName + "' AND ALBUM_ID = " + std::to_string(albumId) + ";";
+	std::string sql = "SELECT ID FROM PICTURES WHERE NAME = '" + pictureName + "' AND ALBUM_ID = " + std::to_string(albumId) + ";";
 	int picId = -1;
 	char* errMsg = nullptr;
 
@@ -44,13 +49,12 @@ void DatabaseAccess::tagUserInPicture(const std::string& albumName, const std::s
 
 void DatabaseAccess::untagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId)
 {
-	int albumId = getID("ALBUM", albumName);
+	int albumId = getID("ALBUMS", albumName);
 
 	// get picId where albumId matches
-	std::string sql = "SELECT ID FROM PICTURE WHERE NAME = '" + pictureName + "' AND ALBUM_ID = " + std::to_string(albumId) + ";";
+	std::string sql = "SELECT ID FROM PICTURES WHERE NAME = '" + pictureName + "' AND ALBUM_ID = " + std::to_string(albumId) + ";";
 	int picId = -1;
 	char* errMsg = nullptr;
-
 	auto callback = [](void* data, int argc, char** argv, char** azColName) -> int
 		{
 			if (argc > 0 && argv[0])
@@ -67,15 +71,15 @@ void DatabaseAccess::untagUserInPicture(const std::string& albumName, const std:
 		return;
 	}
 
-	if (picId == -1
-		) {
+	if (picId == -1)
+	{
 		std::cerr << "Picture not found in the specified album.\n";
 		return;
 	}
 
 	// delete tag where userId and picId match
 	std::string deleteSql = "DELETE FROM TAGS WHERE USER_ID = " + std::to_string(userId) +
-		" AND pictureId = " + std::to_string(picId) + ";";
+		" AND PICTURE_ID = " + std::to_string(picId) + ";";
 
 	if (sqlite3_exec(this->galleryDb, deleteSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
 	{
@@ -106,19 +110,19 @@ void DatabaseAccess::printUsers()
 
 User DatabaseAccess::getUser(int userId)
 {
-	std::string sql = "SELECT USER_ID, USER_NAME FROM USERS WHERE USER_ID = " + std::to_string(userId) + ";";
+	std::string sql = "SELECT ID, NAME FROM USERS WHERE ID = " + std::to_string(userId) + ";";
 	User user(-1, "default");
 	char* errMsg = nullptr;
 
-	auto callback = [](void* data, int argc, char** argv, char** colNames) -> int 
+	auto callback = [](void* data, int argc, char** argv, char** colNames) -> int
 		{
-		if (argc > 0) 
-		{
-			User* user = static_cast<User*>(data);
-			user->setId(std::stoi(argv[0])); 
-			user->setName(argv[1]);          
-		}
-		return 0;
+			if (argc == 2 && argv[0] && argv[1]) 
+			{
+				User* user = static_cast<User*>(data);
+				user->setId(std::stoi(argv[0]));
+				user->setName(argv[1]);
+			}
+			return 0;
 		};
 
 	if (sqlite3_exec(this->galleryDb, sql.c_str(), callback, &user, &errMsg) != SQLITE_OK)
@@ -497,6 +501,13 @@ const std::list<Album> DatabaseAccess::getAlbumsOfUser(const User& user)
 	std::list<Album> albums;
 	std::string sql = "SELECT ID, NAME, USER_ID, CREATION_DATE FROM ALBUMS WHERE USER_ID = " + std::to_string(user.getId()) + ";";
 	char* errMsg = nullptr;
+	
+	
+	
+	
+		std::cout << "User Name is:" << user.getName() << std::endl;
+	
+
 
 	auto callback = [](void* data, int argc, char** argv, char** azColName) -> int
 		{
@@ -530,7 +541,6 @@ void DatabaseAccess::createAlbum(const Album& album)
 		+ std::to_string(album.getOwnerId()) + ", '"
 		+ album.getCreationDate() + "');";
 	char* errMsg = nullptr;
-
 	if (sqlite3_exec(this->galleryDb, sql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
 	{
 		std::cerr << "Error creating album: " << errMsg << std::endl;
@@ -579,6 +589,7 @@ bool DatabaseAccess::doesAlbumExists(const std::string& albumName, int userId)
 
 Album DatabaseAccess::openAlbum(const std::string& albumName)
 {
+	// load album details
 	std::string sql = "SELECT ID, NAME, USER_ID, CREATION_DATE FROM ALBUMS WHERE NAME = '" + albumName + "';";
 	char* errMsg = nullptr;
 	Album album;
@@ -592,7 +603,6 @@ Album DatabaseAccess::openAlbum(const std::string& albumName)
 				int ownerId = std::stoi(argv[2]);
 				std::string name = argv[1];
 				std::string creationTime = argv[3];
-
 				*album = Album(ownerId, name, creationTime);
 			}
 			return 0;
@@ -601,6 +611,74 @@ Album DatabaseAccess::openAlbum(const std::string& albumName)
 	if (sqlite3_exec(this->galleryDb, sql.c_str(), callback, &album, &errMsg) != SQLITE_OK)
 	{
 		std::cerr << "Error retrieving album: " << errMsg << std::endl;
+		sqlite3_free(errMsg);
+		return album;
+	}
+
+	// load pictures for album
+	std::string picturesSql = "SELECT ID, NAME, ALBUM_ID, LOCATION, CREATION_DATE FROM PICTURES WHERE ALBUM_ID = (SELECT ID FROM ALBUMS WHERE NAME = '" + albumName + "');";
+
+	auto picturesCallback = [](void* data, int argc, char** argv, char** azColName) -> int
+		{
+			Album* album = static_cast<Album*>(data);
+
+			if (argc == 5)
+			{
+				int pictureId = std::stoi(argv[0]);
+				std::string pictureName = argv[1];
+				int albumId = std::stoi(argv[2]);
+				std::string location = argv[3];
+				std::string creationDate = argv[4];
+
+				
+				Picture pic(pictureId, pictureName, location, creationDate);
+				if (!album->doesPictureExists(pictureName))
+				{
+					album->addPicture(pic);
+				}
+			}
+			return 0;
+		};
+
+	if (sqlite3_exec(this->galleryDb, picturesSql.c_str(), picturesCallback, &album, &errMsg) != SQLITE_OK)
+	{
+		std::cerr << "Error retrieving pictures: " << errMsg << std::endl;
+		sqlite3_free(errMsg);
+	}
+
+	// now load the tags 
+	std::string tagsSql =
+		"SELECT PICTURES.NAME, TAGS.USER_ID "
+		"FROM TAGS "
+		"JOIN PICTURES ON TAGS.PICTURE_ID = PICTURES.ID "
+		"JOIN ALBUMS ON PICTURES.ALBUM_ID = ALBUMS.ID "
+		"WHERE ALBUMS.NAME = '" + albumName + "';";
+
+	auto tagsCallback = [](void* data, int argc, char** argv, char** azColName) -> int
+		{
+			Album* album = static_cast<Album*>(data);
+
+			if (argc == 2) 
+			{
+				std::string pictureName = argv[0]; 
+				int userId = std::stoi(argv[1]);   
+
+				
+				Picture pic = album->getPicture(pictureName);
+
+				
+				pic.tagUser(userId);
+
+				
+				album->removePicture(pictureName);
+				album->addPicture(pic);
+			}
+			return 0;
+		};
+
+	if (sqlite3_exec(this->galleryDb, tagsSql.c_str(), tagsCallback, &album, &errMsg) != SQLITE_OK)
+	{
+		std::cerr << "Error retrieving tags: " << errMsg << std::endl;
 		sqlite3_free(errMsg);
 	}
 
@@ -649,7 +727,11 @@ void DatabaseAccess::addPictureToAlbumByName(const std::string& albumName, const
 		return;
 	}
 
-	std::string sql = "INSERT INTO PICTURES (ALBUM_ID, NAME, LOCATION, CREATION_DATE) VALUES (" + std::to_string(albumId) + ", '" + picture.getName() + "', '" + picture.getPath() + "');";
+	std::string sql = "INSERT INTO PICTURES (ALBUM_ID, NAME, LOCATION, CREATION_DATE) VALUES ("
+		+ std::to_string(albumId) + ", '" + picture.getName() + "', '" + picture.getPath()
+		+ "', strftime('%d/%m/%Y', 'now'));";
+
+
 	char* errMsg = nullptr;
 
 	if (sqlite3_exec(this->galleryDb, sql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
@@ -667,7 +749,6 @@ void DatabaseAccess::removePictureFromAlbumByName(const std::string& albumName, 
 		std::cerr << "Album not found!" << std::endl;
 		return;
 	}
-
 	std::string sql = "DELETE FROM PICTURES WHERE ALBUM_ID = " + std::to_string(albumId) + " AND NAME = '" + pictureName + "';";
 	char* errMsg = nullptr;
 

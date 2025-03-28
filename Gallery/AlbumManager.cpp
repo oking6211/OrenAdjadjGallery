@@ -139,7 +139,6 @@ void AlbumManager::listAlbumsOfUser()
 	}
 }
 
-
 // ******************* Picture ******************* 
 void AlbumManager::addPictureToAlbum()
 {
@@ -155,7 +154,8 @@ void AlbumManager::addPictureToAlbum()
 	picture.setPath(picPath);
 
 	m_dataAccess.addPictureToAlbumByName(m_openAlbum.getName(), picture);
-
+	m_openAlbum.addPicture(picture);
+	
 	std::cout << "Picture [" << picture.getId() << "] successfully added to Album [" << m_openAlbum.getName() << "]." << std::endl;
 }
 
@@ -164,12 +164,13 @@ void AlbumManager::removePictureFromAlbum()
 	refreshOpenAlbum();
 
 	std::string picName = getInputFromConsole("Enter picture name: ");
-	if ( !m_openAlbum.doesPictureExists(picName) ) {
-		throw MyException("Error: There is no picture with name <" + picName + ">.\n");
-	}
 	
+
 	auto picture = m_openAlbum.getPicture(picName);
 	m_dataAccess.removePictureFromAlbumByName(m_openAlbum.getName(), picture.getName());
+
+	m_openAlbum.removePicture(picName);
+
 	std::cout << "Picture <" << picName << "> successfully removed from Album [" << m_openAlbum.getName() << "]." << std::endl;
 }
 

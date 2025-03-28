@@ -3,6 +3,7 @@
 #include <ctime>		
 #include "MemoryAccess.h"
 #include "AlbumManager.h"
+#include "DatabaseAccess.h"
 
 
 int getCommandNumberFromUser()
@@ -40,7 +41,7 @@ void printWelcome()
 int main(void)
 {
 	// initialization data access
-	MemoryAccess dataAccess;
+	DatabaseAccess dataAccess;
 
 	// initialize album manager
 	AlbumManager albumManager(dataAccess);

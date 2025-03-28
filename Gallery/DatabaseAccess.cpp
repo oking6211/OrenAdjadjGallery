@@ -202,10 +202,11 @@ int DatabaseAccess::countAlbumsOwnedOfUser(const User& user)
 int DatabaseAccess::countAlbumsTaggedOfUser(const User& user)
 {
 	std::string sql =
-		"SELECT COUNT(DISTINCT ALBUMS_ID) FROM ALBUMS "
-		"JOIN Pictures ON ALBUMS_ID = PICTURES.ALBUMS_ID "
-		"JOIN TAGS ON PICTURE_ID = TAGS.PICTURE_ID "
+		"SELECT COUNT(DISTINCT ALBUMS.ID) FROM ALBUMS "
+		"JOIN PICTURES ON ALBUMS.ID = PICTURES.ALBUM_ID "
+		"JOIN TAGS ON PICTURES.ID = TAGS.PICTURE_ID "
 		"WHERE TAGS.USER_ID = " + std::to_string(user.getId()) + ";";
+
 
 	int count = 0;
 	char* errMsg = nullptr;
@@ -250,10 +251,11 @@ float DatabaseAccess::averageTagsPerAlbumOfUser(const User& user)
 	std::string sql =
 		"SELECT AVG(tag_count) FROM ("
 		"SELECT COUNT(TAGS.PICTURE_ID) AS tag_count FROM ALBUMS "
-		"JOIN PICTURES ON ALBUMS.ALBUMS_ID = PICTURES.ALBUMS_ID "
-		"JOIN TAGS ON PICTURES.PICTURE_ID = TAGS.PICTURE_ID "
+		"JOIN PICTURES ON ALBUMS.ID = PICTURES.ALBUM_ID "
+		"JOIN TAGS ON PICTURES.ID = TAGS.PICTURE_ID "
 		"WHERE TAGS.USER_ID = " + std::to_string(user.getId()) +
-		" GROUP BY ALBUMS.ALBUMS_ID);";
+		" GROUP BY ALBUMS.ID);";
+
 
 	float avg = 0.0f;
 	char* errMsg = nullptr;
@@ -279,26 +281,30 @@ float DatabaseAccess::averageTagsPerAlbumOfUser(const User& user)
 User DatabaseAccess::getTopTaggedUser()
 {
 	std::string sql =
-		"SELECT USER_ID, USER_NAME, COUNT(TAGS.PICTURE_ID) AS tag_count "
+		"SELECT USER_ID, NAME, COUNT(TAGS.PICTURE_ID) AS tag_count "
 		"FROM TAGS "
-		"JOIN USERS ON TAGS.USER_ID = USERS.USER_ID "
+		"JOIN USERS ON TAGS.USER_ID = USERS.ID "
 		"GROUP BY USER_ID "
 		"ORDER BY tag_count DESC "
 		"LIMIT 1;";
 
+
 	User topUser(-1, "default");
 	char* errMsg = nullptr;
 
-	auto callback = [](void* data, int argc, char** argv, char** colNames) -> int 
+	
+	auto callback = [](void* data, int argc, char** argv, char** colNames) -> int
 		{
-		if (argc > 0) 
-		{
-			User* user = static_cast<User*>(data);
-			user->setId(std::stoi(argv[0])); 
-			user->setName(argv[1]);          
-		}
-		return 0;
+	
+			if (argc == 3) 
+			{
+				User* user = static_cast<User*>(data);
+				user->setId(std::stoi(argv[0]));  
+				user->setName(argv[1]);           
+			}
+			return 0;
 		};
+
 
 	if (sqlite3_exec(this->galleryDb, sql.c_str(), callback, &topUser, &errMsg) != SQLITE_OK)
 	{
@@ -306,16 +312,16 @@ User DatabaseAccess::getTopTaggedUser()
 		sqlite3_free(errMsg);
 	}
 
-	return topUser;
+	return topUser; 
 }
 
 Picture DatabaseAccess::getTopTaggedPicture()
 {
 	std::string sql =
-		"SELECT PICTURES.PICTURE_ID, PICTURES.PICTURE_NAME, COUNT(TAGS.PICTURE_ID) AS tag_count "
+		"SELECT PICTURES.ID, PICTURES.NAME, COUNT(TAGS.PICTURE_ID) AS tag_count "
 		"FROM TAGS "
-		"JOIN PICTURES ON TAGS.PICTURE_ID = PICTURES.PICTURE_ID "
-		"GROUP BY PICTURES.PICTURE_ID "
+		"JOIN PICTURES ON TAGS.PICTURE_ID = PICTURES.ID "
+		"GROUP BY PICTURES.ID "
 		"ORDER BY tag_count DESC "
 		"LIMIT 1;";
 
@@ -345,9 +351,9 @@ Picture DatabaseAccess::getTopTaggedPicture()
 std::list<Picture> DatabaseAccess::getTaggedPicturesOfUser(const User& user)
 {
 	std::string sql =
-		"SELECT PICTURES.PICTURE_ID, PICTURES.PICTURE_NAME "
+		"SELECT PICTURES.ID, PICTURES.NAME "
 		"FROM TAGS "
-		"JOIN PICTURES ON TAGS.PICTURE_ID = PICTURES.PICTURE_ID "
+		"JOIN PICTURES ON TAGS.PICTURE_ID = PICTURES.ID "
 		"WHERE TAGS.USER_ID = " + std::to_string(user.getId()) + ";";
 
 	std::list<Picture> taggedPictures;

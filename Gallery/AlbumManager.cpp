@@ -44,7 +44,8 @@ void AlbumManager::createAlbum()
 {
 	std::string userIdStr = getInputFromConsole("Enter user id: ");
 	int userId = std::stoi(userIdStr);
-	if ( !m_dataAccess.doesUserExists(userId) ) {
+	if ( !m_dataAccess.doesUserExists(userId) ) 
+	{
 		throw MyException("Error: Can't create album since there is no user with id [" + userIdStr+"]\n");
 	}
 

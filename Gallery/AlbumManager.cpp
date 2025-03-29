@@ -211,6 +211,57 @@ void AlbumManager::showPicture()
 	system(pic.getPath().c_str()); 
 }
 
+void AlbumManager::openPictureWithPaint() 
+{
+	refreshOpenAlbum();
+	int choice = 0;
+	std::string picName = getInputFromConsole("Enter picture name: ");
+
+	if (!m_openAlbum.doesPictureExists(picName)) 
+	{
+		throw MyException("Error: There is no picture with name <" + picName + ">.\n");
+	}
+
+	auto pic = m_openAlbum.getPicture(picName);
+	if (!fileExistsOnDisk(pic.getPath())) 
+	{
+		throw MyException("Error: Can't open <" + picName + "> since it doesn't exist on disk.\n");
+	}
+
+	while (true) 
+	{
+		std::cout << "Choose an external editor (1 for Paint, 2 for IrfanView): ";
+		std::cin >> choice;
+
+		if (choice == 1 || choice == 2) 
+		{
+			std::cout << "You chose: " << (choice == 1 ? "Paint" : "IrfanView") << std::endl;
+			break;
+		}
+		else 
+		{
+			std::cout << "Invalid choice. Please enter 1 for Paint or 2 for IrfanView.\n";
+		}
+	}
+
+	std::string imagePath = pic.getPath();
+	if (choice == 1) 
+	{
+		HINSTANCE result = ShellExecuteA(
+			NULL,
+			"open",
+			"mspaint.exe",
+			imagePath.c_str(),
+			NULL,
+			SW_SHOWNORMAL
+		);
+	}
+	else 
+	{
+		ShellExecuteA(NULL, "open", "C:\\Program Files\\IrfanView\\i_view64.exe", imagePath.c_str(), NULL, SW_SHOWNORMAL);
+	}
+}
+
 void AlbumManager::tagUserInPicture()
 {
 	refreshOpenAlbum();
@@ -434,7 +485,7 @@ const std::vector<struct CommandGroup> AlbumManager::m_prompts  = {
 			{ LIST_PICTURES  , "List pictures." },
 			{ TAG_USER		 , "Tag user." },
 			{ UNTAG_USER	 , "Untag user." },
-			{ LIST_TAGS		 , "List tags." }
+			{ LIST_TAGS		 , "List tags." },
 		}
 	},
 	{
@@ -452,6 +503,7 @@ const std::vector<struct CommandGroup> AlbumManager::m_prompts  = {
 			{ TOP_TAGGED_USER      , "Top tagged user." },
 			{ TOP_TAGGED_PICTURE   , "Top tagged picture." },
 			{ PICTURES_TAGGED_USER , "Pictures tagged user." },
+			{OPEN_PIC        , "Open pic"},
 		}
 	},
 	{
@@ -485,5 +537,7 @@ const std::map<CommandType, AlbumManager::handler_func_t> AlbumManager::m_comman
 	{ TOP_TAGGED_PICTURE, &AlbumManager::topTaggedPicture },
 	{ PICTURES_TAGGED_USER, &AlbumManager::picturesTaggedUser },
 	{ HELP, &AlbumManager::help },
-	{ EXIT, &AlbumManager::exit }
+	{ EXIT, &AlbumManager::exit },
+	{OPEN_PIC, &AlbumManager::openPictureWithPaint}
+
 };

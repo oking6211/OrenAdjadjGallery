@@ -3,7 +3,10 @@
 #include "Constants.h"
 #include "MemoryAccess.h"
 #include "Album.h"
-
+#include <limits>
+#include <Windows.h>
+#include <string>
+#include <iostream>
 
 class AlbumManager
 {
@@ -36,6 +39,8 @@ private:
 	void removePictureFromAlbum();
 	void listPicturesInAlbum();
 	void showPicture();
+	void openPictureWithPaint();
+
 
 	// tags related
 	void tagUserInPicture();

@@ -1,7 +1,9 @@
 #include <iostream>
 #include <string>
+#include <ctime>		
 #include "MemoryAccess.h"
 #include "AlbumManager.h"
+#include "DatabaseAccess.h"
 
 
 int getCommandNumberFromUser()
@@ -28,16 +30,26 @@ int getCommandNumberFromUser()
 	return std::atoi(input.c_str());
 }
 
+void printWelcome()
+{
+	time_t timestamp;
+	time(&timestamp);
+	std::cout << ctime(&timestamp);
+	std::cout << "Verison 1.0.2 Created by: Oren Adjadj \n" << std::endl;
+}
+
 int main(void)
 {
 	// initialization data access
-	MemoryAccess dataAccess;
+	DatabaseAccess dataAccess;
 
 	// initialize album manager
 	AlbumManager albumManager(dataAccess);
 
 
 	std::string albumName;
+	
+	printWelcome();
 	std::cout << "Welcome to Gallery!" << std::endl;
 	std::cout << "===================" << std::endl;
 	std::cout << "Type " << HELP << " to a list of all supported commands" << std::endl;

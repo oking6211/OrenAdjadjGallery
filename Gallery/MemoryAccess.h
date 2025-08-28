@@ -3,6 +3,7 @@
 #include "Album.h"
 #include "User.h"
 #include "IDataAccess.h"
+#include <vector>
 
 class MemoryAccess : public IDataAccess
 {
